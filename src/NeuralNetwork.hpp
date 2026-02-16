@@ -22,44 +22,8 @@
 #include <string.h>
 #include <time.h>
 
-#pragma once
+//#pragma once
 #pragma GCC optimize (2)
-
-namespace CO2Addon {
-    __attribute__((aligned(16))) float *cofficients;
-    unsigned idxmax = 0;
-    using CO2float = class CO2float {
-
-        public: float reslist[4], arglist[4],coflist[4];
-        public: __m128 mres, marg, mcof;
-        public: float data={};
-        public: CO2float(float dt): data(dt) {}
-        public: ~CO2float(void) {}
-
-        public: inline CO2float& operator[] (unsigned index) {
-            cofficients[index]=data, idxmax=std::max(idxmax, index);
-            return *this;
-        }
-
-        public: float calc(CO2float& arg) {
-            // Horner's Method.
-            (*reslist)=*cofficients, (*arglist)=arg.data, (*coflist)=0.f;
-            mres = _mm_load_ps(reslist), marg = _mm_load_ps(arglist), mcof = _mm_load_ps(coflist);
-            for(short i = 1; i < idxmax; i++) {
-                // result=result*arg.data+cofficients[i];
-
-                (*coflist) = cofficients[i];
-                mcof = _mm_load_ps(coflist);
-                mres = _mm_mul_ps(mres, marg);
-                mres = _mm_add_ps(mres, mcof);
-            }
-            _mm_store_ps(reslist, mres);
-            memset(cofficients, 0, sizeof(*cofficients)*idxmax);
-            idxmax = 0;
-            return *reslist;
-        }
-    };
-}
 
 namespace BackwardGrad {
 	unsigned globalid = 0;
@@ -171,7 +135,7 @@ namespace BackwardGrad {
 	    };
 	    return *t;
 	}
-	
+
 	template <typename _Type> Autograd<_Type>& AgTanh(Autograd<_Type> &arg) {
 	    Autograd<_Type> *t = new Autograd<_Type>(std::tanh(arg.data), _Type(0), arg.gradlist, arg.mempool);
 	    arg.mempool.push(t);
@@ -179,7 +143,10 @@ namespace BackwardGrad {
 	    t->parents.push_back(&arg);
 	    t->backward = [](Autograd<_Type> &self) -> void {
 	        Autograd<_Type> *a = self.parents[0];
-	        if (a) a->grad += self.grad * (1.f - std::tanh(std::tanh(a->data)));
+	        if (a) {
+	            _Type tv = std::tanh(a->data);
+	            a->grad += self.grad * ( (_Type)1 - tv * tv );
+	        }
 	    };
 	    return *t;
 	}
@@ -201,11 +168,11 @@ namespace BackwardGrad {
 };
 
 inline long double gendata(void) {
-    return (long double)(rand() % 1145) / 1145.0f;
+    return (long double)(rand() % 1145) / 1145.0L;
 }
 
 inline long double tanh_derivate(long double x) {
-	return 1-std::tanh(std::tanh(x));
+	return 1 - (std::tanh(x)) * (std::tanh(x));
 }
 
 namespace NeuralNetwork {
@@ -213,37 +180,45 @@ namespace NeuralNetwork {
 	template<typename _Type> class UnitLayer;
 	template<typename _Type> class NetworkUnion;
 	template<typename _Type> using AgFloat = BackwardGrad::Autograd<_Type>;
-	template<typename _Type> using Matrix = std::vector<std::vector<AgFloat<_Type>>>;
+	template<typename _Type> using Matrix = std::vector<std::vector<AgFloat<_Type>&>>;
 	
 	template<typename _Type> class UnitLayer {
 		public: static const _Type zero=_Type{0.f};
 	    public: std::vector<_Type> &gradlist;
 	    public: BackwardGrad::Automem<_Type> &mempool;
 		public: std::vector<AgFloat<_Type>&> elements;
-		public: Matrix<_Type> &weights;
-		public: AgFloat<_Type> bias(_Type(gendata()),_Type,_Type,_Type);
+		public: Matrix<_Type> weights;
 		
 	    public: UnitLayer(unsigned n, std::vector<_Type> &mount, BackwardGrad::Automem<_Type> &peepool)
 	        			: gradlist(mount), mempool(peepool) {
-			while(n--) elements.push_back(AgFloat<_Type>(_Type(gendata()),_Type(0.f),gradlist,mempool));
-			elements.push_back(bias);
-			for(int i = 0; i < elements.size(); i++)
-					weights.push_back(AgFloat<_Type>(
-					                    gendata(),_Type(1.f),gradlist,mempool));
-			elements.push_back(bias);
+			unsigned original = n;
+			while(n--) {
+			    AgFloat<_Type> *node = new AgFloat<_Type>(_Type(gendata()), _Type(0), gradlist, mempool);
+			    mempool.push(node);
+			    elements.push_back(node);
+			}
+			for (unsigned i = 0; i < elements.size(); i++) {
+				weights.push_back({});
+				for (unsigned j = 0; j < elements.size(); j++) {
+					AgFloat<_Type> *w = new AgFloat<_Type>(_Type(gendata()), _Type(1), gradlist, mempool);
+					mempool.push(*w);
+					weights.back().push_back(*w);
+				}
+			}
+			(void)original;
 			return ;
 	    }
 		public: ~UnitLayer(void) {}
 		
 	    public: std::vector<AgFloat<_Type>&> forward(void) {
-	    	std::vector<AgFloat<_Type>> result;
+	    	std::vector<AgFloat<_Type>&> result;
 	    	for(int i = 0; i < weights.size(); i++) {
 	    		AgFloat<_Type> *sigma =
 				    new AgFloat<_Type>(0.f,1.f,gradlist,mempool);
 		    	for(int j = 0; j < weights[0].size(); j++) {
-		    		(*sigma)=(*sigma)+elements[j]*weights[i];
+		    		(*sigma)=(*sigma)+elements[j]*weights[i][j];
 				}
-				result.push_back(*sigma);
+				result.push_back(AgTanh(*sigma));
 			}
 			return result;
 		}
@@ -260,7 +235,7 @@ namespace NeuralNetwork {
 	    }
 	    public: ~NetworkUnion(void) {}
 	    
-	    public: UnitLayer<_Type>& forward(UnitLayer<_Type> &xspvec) {
+	    public: UnitLayer<AgFloat<_Type>>& forward(UnitLayer<AgFloat<_Type>> &xspvec) {
 	    	network[0].elements = xspvec.elements;
 	    	for(int i = 1; i < network.size(); i++) {
 	    		network[i].elements = network[i-1].forward();
@@ -271,11 +246,16 @@ namespace NeuralNetwork {
 	    public: AgFloat<_Type>& mseloss (
 		  UnitLayer<AgFloat<_Type>> &xspvec,
 		  UnitLayer<AgFloat<_Type>> &yspvec,
-		  unsigned batchsz) 												{
-	    	AgFloat<_Type> loss={0.f};
+		  unsigned batchsz) {
+	    	AgFloat<_Type> loss(0.f,0.f);
 	    	UnitLayer<AgFloat<_Type>> &y_hat=forward(xspvec);
 	    	for(int i = 0; i < y_hat.elements.size(); i++)
 			    loss = loss + (y_hat.elements[i]-yspvec.elements[i])*(y_hat.elements[i]-yspvec.elements[i])*batchsz;
+   	    	if (!loss) {
+   	    	    AgFloat<_Type> *z = new AgFloat<_Type>(_Type(0), _Type(0), gradlist, mempool);
+   	    	    mempool.push(*z);
+   	    	    loss = *z;
+   	    	}
    	    	return loss;
 		}
 		
@@ -283,12 +263,16 @@ namespace NeuralNetwork {
 		  std::vector<UnitLayer<AgFloat<_Type>>> &xspset,
 		  std::vector<UnitLayer<AgFloat<_Type>>> &yspset,
 		  unsigned batchsz,
-		  long double ln_rate=0.03f) 									   {
-			for(int j = 0; j < batchsz; j++) {
-				mseloss(xspset[j], yspset[j], batchsz).updgrad();
-				for(auto&is:network) {
-					for(auto&si:is.weights) {
-						for(auto&js:si) js.data -= ln_rate*js.grad;
+		  long double ln_rate=0.03f) {
+			for(unsigned j = 0; j < batchsz; j++) {
+				AgFloat<_Type> &loss = mseloss(xspset[j], yspset[j], batchsz);
+				loss.resetgrad();
+				loss.updgrad();
+				for(auto &layer: network) {
+					for(auto &row: layer.weights) {
+						for(auto &wptr: row) {
+							wptr.data -= _Type(ln_rate) * wptr->grad;
+						}
 					}
 				}
 			}
