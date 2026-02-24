@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/C-SVM: A c++11 implementation of Binary-SVM & Multiple-SVM        *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.2.20 (latest upd)                                              *
+ * @Date: 2026.2.24 (latest upd)                                              *
  * @Description: A c++11 implementation of Binary-SVM & Multiple-SVM          *
  * @Modules: {                                                                *
  *     SVMPackage::Kernel, SVMPackage::BinarySVM, SVMPackage::Multiple-SVM    *
@@ -39,10 +39,11 @@ namespace SVMPackage {
 	            }
 	            return std::exp(-gamma * sq);
 	        } else if(type == POLYNOMIAL) {
-	            _Type s = {0};
+	            _Type s = {0}, v;
 	            for (int i = 0; i < a.size(); ++i) s += a[i] * b[i];
+				v=s;
 	            int t = degree;
-	            do s*=s;
+	            do s*=v;
 				while(--t);
 				return s;
 			} else {
@@ -129,7 +130,8 @@ namespace SVMPackage {
 		public: _Type C={0};
 		public: unsigned tagamt;
 		public: std::vector<std::vector<_Type>> alplist;
-		public: std::vector<std::vector<_Type>> vecx, tagy;
+		public: std::vector<std::vector<_Type>> vecx;
+		public: std::vector<_Type> tagy;
 		public: std::vector<std::vector<_Type>> K; // kernel matrix
 		public: MultipleSVM(std::vector<_Type> argb, _Type argC, Kernel<_Type> argk):
 				  b(argb), C(argC), kernel(argk), tagamt(argb.size()) {}
@@ -197,3 +199,4 @@ namespace SVMPackage {
 		}
 	};
 }
+
