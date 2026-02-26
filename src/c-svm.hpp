@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/C-SVM: A c++11 implementation of Binary-SVM & Multiple-SVM        *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.2.24 (latest upd)                                              *
+ * @Date: 2026.2.26 (latest upd)                                              *
  * @Description: A c++11 implementation of Binary-SVM & Multiple-SVM          *
  * @Modules: {                                                                *
  *     SVMPackage::Kernel, SVMPackage::BinarySVM, SVMPackage::Multiple-SVM    *
@@ -63,36 +63,57 @@ namespace SVMPackage {
 	}
 	
 	template<typename _Type> class Kernel {
-		public:    enum Type { LINEAR, RBF, POLYNOMIAL } type = LINEAR;
-		protected: _Type gamma = 0.5L;
+		public:    enum Type {
+					LINEAR,
+					GAUSSIAN,
+					LAPLACIAN,
+					CAUCHY,
+					COSINE,
+					POLYNOMIAL,
+					TRIANGULAR  } type = LINEAR;
+		protected: _Type gamma = 0.5L, theta = 3.1415L;  // gamma=1/(2*sigma^2)
 		protected: int degree = 1;
 		
-		public: Kernel(Type t = LINEAR, _Type eg = 1.0L) : type(t), gamma(eg), degree((int)eg) {}
+		public: Kernel(Type t = LINEAR, _Type eg = 1.0L) : type(t), gamma(eg), theta(eg), degree((int)eg) {}
 		public: ~Kernel(void) {}
 		
 		public: _Type operator()(const std::vector<_Type>& a, const std::vector<_Type>& b) const {
-			if (type == LINEAR) {
-				_Type s = {0};
-				for (int i = 0; i < a.size(); ++i) s += a[i] * b[i];
-				return s;
-			} else if(type == RBF) {
-				_Type sq = {0};
-				for (int i = 0; i < a.size(); ++i) {
-					_Type d = a[i] - b[i];
-					sq += d * d;
-				}
-				return std::exp(-gamma * sq);
-			} else if(type == POLYNOMIAL) {
-				_Type s = {0}, v;
-				for (int i = 0; i < a.size(); ++i) s += a[i] * b[i];
-				v=s;
-				int t = degree-1;
-				do s*=v;
-				while(--t);
-				return s;
-			} else {
-				return -65536;
-			}
+			_Type sq = {0};
+			switch(type) {
+				case LINEAR:
+					for (int i = 0; i < a.size(); ++i) sq += a[i] * b[i];
+					return sq;
+				case GAUSSIAN:
+					for (int i = 0; i < a.size(); ++i) {
+						_Type d = a[i] - b[i];
+						sq += d * d;
+					}
+					return std::exp(-gamma * sq);
+				case LAPLACIAN:
+					for (int i = 0; i < a.size(); ++i) {
+						sq += fabs(a[i] - b[i]);
+					}
+					return std::exp(-sqrt(_Type(2)*gamma) * sq);
+				case CAUCHY:
+					for (int i = 0; i < a.size(); ++i) {
+						_Type d = a[i] - b[i];
+						sq += d * d;
+					}
+					return _Type(1)/(_Type(1)+sq*(_Type(2)*gamma));
+				case COSINE:
+					for (int i = 0; i < a.size(); ++i) sq += (a[i] - b[i])*(a[i] - b[i]);
+					return std::cos(theta*std::sqrt(sq));
+				case POLYNOMIAL:
+					for (int i = 0; i < a.size(); ++i) sq += a[i] * b[i];
+					return std::pow(sq,degree);
+				case TRIANGULAR:
+					sq=_Type(1);
+					for (int i = 0; i < a.size(); ++i)
+						sq *= std::max(_Type(1)-std::fabs(a[i] - b[i])*sqrt(_Type(2)*gamma),_Type(0));
+					return sq;
+				default:
+					return -65536;
+			};
 		}
 	};
 	
@@ -257,8 +278,8 @@ namespace SVMPackage {
 			for(int j = 0; j < alplist.size(); j++) r+=alplist[j]*tagy[j]*kernel(vecx[j],x);
 			return r+b;
 		}
-		public: void train(const std::vector<std::vector<_Type>>& vx,
-						   const std::vector<short>& ty) {
+		public: void optimize(const std::vector<std::vector<_Type>>& vx,
+							  const std::vector<short>& ty) {
 			vecx=vx, tagy=ty;
 			int N=vecx.size(), iter=0;
 			K.resize(N,std::vector<_Type>(N,_Type{0}));
