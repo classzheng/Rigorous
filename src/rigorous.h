@@ -12,30 +12,28 @@
 #if defined($DISABLE_ALL)
 #   pragma message("Disabled #Rigorous.")
 #else
-#	if !defined($DISABLE_ANN)
-#		include "neuralnetwork.hpp"
-#	else
-#   	pragma message("Disabled #Rigorous/NeuralNetwork.")
-#   endif
+	namespace Rigorous {
+#		if !defined($DISABLE_ANN)
+#			include "neuralnetwork.hpp"
+		using namespace BackwardGrad;
+		using namespace NeuralNetwork;
+#		else
+#   		pragma message("Disabled #Rigorous/NeuralNetwork.")
+#   	endif
 
-#	if !defined($DISABLE_SVM)
-#		include "c-svm.hpp"
-#	else
-#   	pragma message("Disabled #Rigorous/C-SVM.")
-#   endif
+#		if !defined($DISABLE_SVM)
+#			include "c-svm.hpp"
+		using namespace SVMPackage;
+#		else
+#   		pragma message("Disabled #Rigorous/C-SVM.")
+#   	endif
 
-#	if !defined($DISABLE_RF)
-#		include "randomforest.hpp"
-#	else
-#   	pragma message("Disabled #Rigorous/RandomForest.")
-#   endif
-
-#	if defined($USING_PACKAGES)
-	using namespace BackwardGrad;
-	using namespace NeuralNetwork;
-	using namespace SVMPackage;
-	using namespace RandomForest;
-#	endif
+#		if !defined($DISABLE_RF)
+#			include "randomforest.hpp"
+		using namespace RandomForest;
+#		else
+#   		pragma message("Disabled #Rigorous/RandomForest.")
+#   	endif
+	}
 
 #endif
-
