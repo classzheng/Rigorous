@@ -1,0 +1,41 @@
+# #Rigorous Modules & Usage
+#Rigorous is an Open-source ml-lib under MPL-2.0 License.
+Because of the feature of `Week Copyleft`, you can choose to close-source the primary copy of #Rigorous in your open-source repository.  
+See also: LICENSE
+
+So far, #Rigorous can be used as a lib-file and there's no need to commit another one.
+We suggest you to add it to the Include path as a 3rd-party standard lib.
+
+## Clone #Rigorous
+Use `git clone`, or download .zip file in https://www.github.com/classzheng/rigorous.  
+
+Use
+```linux
+git clone https://www.github.com/classzheng/rigorous.git
+```
+to clone #Rigorous to your local repository.
+
+## Set as a 3rd-party Standard Library  
+All of the header files of #Rigorous can be set as 3SL. For different compilers, you can search for the Include path by the debug information.  
+There's nothing else to be here.
+
+This is a static lib, copy the source file under Rigorous-main/src/ to the Include path directly.  
+Easily, after setting up, you can use the following code to include #Rigorous:  
+```cpp
+#include <rigorous.h>
+```
+
+## <rigorous.h> Compiling Macros
+See also: Rigorous-main/src/rigorous.h  
+Here's the list of them:  
+ - `$DISABLE_ALL` Macro  Disable all of the functions in #Rigorous  
+ - `$DISABLE_ANN` Macro  Disable `ANN` & `Autograd` Lib  
+ - `$DISABLE_SVM` Macro  Disable `C-SVM`  
+ - `$DISABLE_RF`  Macro  Disable `Random-Forest`  
+The above macros are `defined`, use `#define $RIGOROUS_MACRO` pattern is enough.
+
+All of the namespaces have been referenced in `namespace Rigorous`, so you can use `Rigorous::C1A55` to use the classes.  
+
+classzheng相信您也不是若至, 应该是有点阅读理解能力的, 您大可以从Rigorous-main/examples/下的demo (写了, 待补commit) 来读懂它, 后续也将递交数学基础的相关文档.  
+毕竟, 这是学习用途的嘛.  
+--  classzheng 2026.3.7
