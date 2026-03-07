@@ -1,0 +1,35 @@
+# #Rigorous组件库及其配置方法
+#Rigorous是基于MPL-2.0开源条款的机器学习库, 鉴于其`弱Copyleft特性`, 您在开源仓库时可以选择对未修改过的#Rigorous副本进行闭源, 具体详见LICENSE.  
+因此, #Rigorous可以作为库文件被包含而无需额外递交commit到使用了此库的开源仓库, 因此首选将其添加到Include目录中作为第三方标准库来使用.  
+
+## 拉取#Rigorous
+可以使用git clone指令拉取, 也可以在 https://www.github.com/classzheng/rigorous 页面中选择下载zip.  
+
+使用
+```linux
+git clone https://www.github.com/classzheng/rigorous.git
+```
+指令将rigorous拉取到本地.
+
+## 作为第三方标准库配置  
+#Rigorous的头文件均可作为第三方标准库头文件配置到您的编译器Include目录. 对于不同编译器, 您可以通过调试信息来查找Include路径, 此处不加以赘述.  
+
+这是一个静态库, 直接将Rigorous-main/src/路径下源文件复制至Include路径下即可.  
+显然, 配置完成后, 您可以使用以下代码来包含此库:  
+```cpp
+#include <rigorous.h>
+```
+
+## <rigorous.h>编译宏
+具体可以自行阅览Rigorous-main/src/rigorous.h, 此处予以列表指出:  
+ - `$DISABLE_ALL`宏  禁用#Rigorous所有功能  
+ - `$DISABLE_ANN`宏  禁用ANN部分功能及Autograd(自动梯度)模板库  
+ - `$DISABLE_SVM`宏  禁用C-SVM部分功能  
+ - `$DISABLE_RF` 宏  禁用随机森林部分功能  
+以上宏均由`defined`宏判断, 使用`#define $RIGOROUS_MACRO`形式即可.
+
+所有库文件中的命名空间均在Rigorous命名空间中被引用, 因此可以直接使用`Rigorous::类库名`来使用各部分类库中的类.  
+
+classzheng相信您也不是若至, 应该是有点阅读理解能力的, 您大可以从Rigorous-main/examples/下的demo (写了, 待补commit) 来读懂它, 后续也将递交数学基础的相关文档.  
+毕竟, 这是学习用途的嘛.  
+--  classzheng 2026.3.7
