@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/Rigorous: Template file module of the library.                    *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.2.20 (latest upd)                                              *
+ * @Date: 2026.3.8 (latest upd)                                               *
  * @Description: The includeing file of #Rigorous Lib files.                  *
  * @Modules: {}                                                               *
  ******************************************************************************/
@@ -14,6 +14,7 @@
 #else
 #	if !defined($DISABLE_ANN)
 #		include "neuralnetwork.hpp"
+#		include "autograd.hpp"
 		namespace Rigorous {
 			using namespace BackwardGrad;
 			using namespace NeuralNetwork;
