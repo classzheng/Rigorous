@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/Rigorous: Template file module of the library.                    *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.3.8 (latest upd)                                               *
+ * @Date: 2026.3.14 (latest upd)                                              *
  * @Description: The includeing file of #Rigorous Lib files.                  *
  * @Modules: {}                                                               *
  ******************************************************************************/
