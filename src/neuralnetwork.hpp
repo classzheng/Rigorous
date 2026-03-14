@@ -8,34 +8,15 @@
  * }                                                                          *
  ******************************************************************************/
 
-#include <iostream>
-#include <vector>
-#include <functional>
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
-#include <stdexcept>
+#include "mathlib.hpp"
 
  #pragma once
  #pragma GCC optimize (2)
 
-inline double genrandom(void) {
-	return ( double)(rand()%1000)/500.L-1.L;
-}
-
-template<typename _Type> _Type sigmoid(const _Type x) {
-	return 1.0 / (1.0 + exp(-x));
-}
-
-template<typename _Type> _Type tanh_derivate(const double x) {
-	return 1 - (std::tanh(x)) * (std::tanh(x));
-}
-
-template<typename _Type> _Type sigmoid_derivate(const _Type x) {
-	return x * (1 - x);
-}
-
 namespace NeuralNetwork {
+	 
+	using namespace Mathlib;
+	 
 	using initType =  double;
 	template<typename _Type> class UnitLayer;
 	template<typename _Type> class NetworkUnion;
