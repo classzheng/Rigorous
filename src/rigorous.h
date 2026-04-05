@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/Rigorous: Template file module of the library.                    *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.3.14 (latest upd)                                              *
+ * @Date: 2026.4.5 (latest upd)                                               *
  * @Description: The includeing file of #Rigorous Lib files.                  *
  * @Modules: {}                                                               *
  ******************************************************************************/
@@ -39,5 +39,14 @@
 	}
 #	else
 #   	pragma message("Disabled #Rigorous/RandomForest.")
+#   endif
+
+#	if !defined($DISABLE_MTE)
+#		include "theorememitter.hpp"
+	namespace Rigorous {
+		using namespace TheoremEmitter;
+	}
+#	else
+#   	pragma message("Disabled #Rigorous/MachineTheoremEmitter.")
 #   endif
 #endif
