@@ -1,8 +1,8 @@
 /******************************************************************************
  * Rigorous/TheoremEmitter: Automatic Theorem Prover templates.               *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.3.27 (latest upd)                                              *
- * @Description: Based on Martin-Lof Type Theory (MLTT).                      *
+ * @Date: 2026.4.6 (latest upd)                                               *
+ * @Description: Based on Homotopy Type Theory (HoTT).                        *
  ******************************************************************************/
 
 #include <random>
@@ -25,20 +25,22 @@ namespace TheoremEmitter {
 		Constant,
 		Lambda,
 		Reference,
-		CartPair
+		CartesianPair,
+		CoproductPair,
+		CartproType,
+		CoproType,
 	};
 	class Element {
 		public: std::string var;
 		public: Element *type;
-		public: Element *ac, *co;
 		public: Element *first, *second;
 		public: ElementType et;
 		
 		public: Element(void) : var(""), type(nullptr) {}
 		public: ~Element(void) = default;
 		public: Element(std::string v, Element *tp) : var(v), type(tp), et(Constant) {}
-		public: Element(Element *a, Element *c, float) : ac(a), co(c), et(Lambda) {}
-		public: Element(Element *f, Element *s, long) : first(f), second(s), et(CartPair) {}
+		public: Element(Element *a, Element *c, float) : first(a), second(c), et(Lambda) {}
+		public: Element(Element *f, Element *s, long) : first(f), second(s), et(CartesianPair) {}
 		
 		public: Element(const Element& other) : var(other.var), type(nullptr), et(Reference) {
 			if (other.type != nullptr) {
@@ -106,8 +108,8 @@ namespace TheoremEmitter {
 			AtomicFormula af("lambda^(" + AtomicFormula(antecedent).literal() + ")." + c.var, new Element(typeStr, nullptr));
 			lambda = af();
 			lambda.et=Lambda;
-			lambda.ac=&antecedent;
-			lambda.co=&consequence;
+			lambda.first=&antecedent;
+			lambda.second=&consequence;
 			return ;
 		}
 		
@@ -145,23 +147,29 @@ namespace TheoremEmitter {
 		}
 		
 		public: inline Element operator() (void) {
-			return Element(this->literal(),&Universe);
+			Element lit(this->literal(),&Universe);
+			lit.et=CartproType;
+			lit.first=&A;
+			lit.second=&B;
+			return lit;
 		}
 		
 		public: Element constructor(Element a, Element b) {
 			Element type=(*this)();
-			return Element("*("+a.var+","+b.var+")", &type);
+			Element con("*("+a.var+","+b.var+")", &type);
+			con.et=CartesianPair;
+			return con;
 		};
 		
 		public: Element recursor(Element C, Element g, Element pair) {  // g:A->B->C, pair:(A*B)
-			LambdaAbst abst(*g.ac,*g.co),
+			LambdaAbst abst(*g.first,*g.second),
 			appl0=LambdaAbst(abst.Appl(*pair.first), Element(B.var+"->"+C.var, nullptr));
 			return appl0.Appl((*pair.second));
 		};
 		
 		public: Element inductor(Element C, Element g, Element pair) {
 			// C:(A*B)->U, g:A->B->(C(x) forall(x:A*B)), pair:(A*B), ind(-,-,-):(C(x) forall(x:A*B))
-			LambdaAbst abst(*g.ac,*g.co),
+			LambdaAbst abst(*g.first,*g.second),
 			appl0=LambdaAbst(abst.Appl(*pair.first), Element(B.var+"->"+C.var, nullptr));
 			return appl0.Appl((*pair.second));
 		};
@@ -178,27 +186,36 @@ namespace TheoremEmitter {
 		}
 		
 		public: inline std::string literal(void) {
-			return A.var+"*"+B.var;
+			return A.var+"+"+B.var;
 		}
 		
 		public: inline Element operator() (void) {
-			return Element(this->literal(),&Universe);
+			Element lit(this->literal(),&Universe);
+			lit.et=CoproType;
+			lit.first=&A;
+			lit.second=&B;
+			return lit;
 		}
 		
 		public: Element constructor(Element a, Element b) {
 			Element type=(*this)();
-			return Element("+("+a.var+","+b.var+")", &type);
+			Element con("+("+a.var+","+b.var+")", &type);
+			con.et=CoproductPair;
+			return con;
 		};
 		
-		public: Element recursor(Element C, Element g, Element pair) {  // g:A->B->C, pair:(A+B)
-			LambdaAbst abst(*g.ac,*g.co),
+		
+		
+		// CAUTION: I am still learning about Coproduct type, so it's not available now... 
+		public: [[deprecated]] Element recursor(Element C, Element g, Element pair) {  // g:A->B->C, pair:(A+B)
+			LambdaAbst abst(*g.first,*g.second),
 			appl0=LambdaAbst(abst.Appl(*pair.first), Element(B.var+"->"+C.var, nullptr));
 			return appl0.Appl((*pair.second));
 		};
 		
-		public: Element inductor(Element C, Element g, Element pair) {
+		public: [[deprecated]] Element inductor(Element C, Element g, Element pair) {
 			// C:(A*B)->U, g:A->B->(C(x) forall(x:A*B)), pair:(A*B), ind(-,-,-):(C(x) forall(x:A*B))
-			LambdaAbst abst(*g.ac,*g.co),
+			LambdaAbst abst(*g.first,*g.second),
 			appl0=LambdaAbst(abst.Appl(*pair.first), Element(B.var+"->"+C.var, nullptr));
 			return appl0.Appl((*pair.second));
 		};
@@ -236,31 +253,104 @@ namespace TheoremEmitter {
 			std::random_device rd;
 			std::mt19937 mtrng(rd());
 			
+			auto rand_index = [&](int sz) -> int {
+				if (sz == 0) return 0;
+				std::uniform_int_distribution<int> dist(0, sz - 1);
+				return dist(mtrng);
+			};
+			
 			while (epoch < limit) {
 				emtop = (EmitOperation)(mtrng() % operationamt);
+				while(rand_index(Gamma.size()))  // Shuffle
+					std::swap(Gamma[rand_index(Gamma.size())],Gamma[rand_index(Gamma.size())]);
 				
 				switch (emtop) {
-					case AbstLambda:
+					case AbstLambda: {
 						// Construct a function here. 
+						if (Gamma.size() < 2) break;
+						int a = rand_index(Gamma.size()), c = rand_index(Gamma.size());
+						if (a == c) c = (c + 1) % Gamma.size();
+					
+						LambdaAbst lab(Gamma[a], Gamma[c]);
+						Element lambda = lab.Abst();
+						
+						std::cout << "(abst):- " << lambda.var
+								  << " : " << (lambda.type ? lambda.type->var : "nil") << ".\n";
+						
+						Gamma.push_back(lambda);
 						break;
-					case ApplLambda:
+					}
+					
+					case ApplLambda: {
 						// Select a function and arguments.
+						Element *lambda=nullptr;
+						for(auto &is:Gamma) 
+							if(is.et==Lambda) {lambda=&is; break;}
+						if(lambda==nullptr) {
+//							std::cout << "(appl):- nil.\n";
+							break;
+						}
+						Element arg=*lambda->first, *appl=nullptr;
+						for(auto &is:Gamma) {
+							if(is.type==arg.type) {
+								appl=&is;
+								break;
+							}
+						}
+						if(appl==nullptr) {
+//							std::cout << "(appl):- nil.\n";
+							break;
+						}
+						LambdaAbst func(*lambda->first, *lambda->second);
+						Element ret=func.Appl(arg);
+						std::cout << "(appl)Gamma," << lambda->var << ":- "
+							      << (AtomicFormula(ret).literal()) << ".\n";
+						
+						Gamma.push_back(ret);
 						break;
-					case Currying:
+					}
+					
+					case Currying: {
 						// Convert a Cartesian product type.
+						Element *cartprotype=nullptr;
+						for(auto &is:Gamma) {
+							if(is.et==CartproType) {
+								cartprotype=&is;
+								break;
+							}
+						}
+						if(cartprotype==nullptr) {
+//							std::cout << "(curry):- nil.\n";
+							break;
+						}
+						CartesianProduct cart2pro(*(cartprotype->first),*(cartprotype->second));
+						Element curried=(cart2pro.Currying().Abst());
+						std::cout << "(curry):- " << cart2pro.literal() << " := " << curried.var << ".\n";
+						
+						Gamma.push_back(curried);
 						break;
-					case Recursion:
+					}
+					
+					case Recursion: {
 						// Construct a recursor.
 						break;
-					case Induction:
+					}
+					
+					case Induction: {
 						// Construct a inductor (Always to prove)
 						break;
-					case ConstructProduct:
+					}
+					
+					case ConstructProduct: {
 						// Construct a product.
 						break;
-					case ConstructCoproduct:
+					}
+					
+					case ConstructCoproduct: {
 						// Construct a coproduct.
 						break;
+					}
+					
 					default:
 						throw std::exception();
 				}
