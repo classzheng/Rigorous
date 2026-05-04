@@ -1,7 +1,7 @@
 /******************************************************************************
  * Rigorous/Rigorous: Template file module of the library.                    *
  * @Author: classzheng@github                                                 *
- * @Date: 2026.4.5 (latest upd)                                               *
+ * @Date: 2026.3.8 (latest upd)                                               *
  * @Description: The includeing file of #Rigorous Lib files.                  *
  * @Modules: {}                                                               *
  ******************************************************************************/
@@ -42,9 +42,9 @@
 #   endif
 
 #	if !defined($DISABLE_MTE)
-#		include "theorememitter.hpp"
+#		include "theoremoperator.hpp"
 	namespace Rigorous {
-		using namespace TheoremEmitter;
+		using namespace TheoremOperator;
 	}
 #	else
 #   	pragma message("Disabled #Rigorous/MachineTheoremEmitter.")
