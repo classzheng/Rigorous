@@ -1,7 +1,7 @@
 #include "rigorous.h"
-using namespace Rigorous;
-using namespace std;
 int main() {
+	using namespace Rigorous;
+	using namespace std;
 	srand(time(nullptr));
 	std::vector<int> arg={2, 4, 1};
 	NeuralNetwork::NetworkUnion<double> nn(arg, 0.1,

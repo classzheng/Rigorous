@@ -1,6 +1,6 @@
 #include "rigorous.h"
-using namespace Rigorous;
 int main(void) {
+	using namespace Rigorous;
 	try {
 		std::vector<std::vector<double>> X = {{1,2},{2,3},{3,4},{5,6},{6,7},{7,8}};
 		std::vector<short> y = {1,1,1,-1,-1,-1};
