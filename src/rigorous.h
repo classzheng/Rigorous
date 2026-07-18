@@ -41,12 +41,12 @@
 #   	pragma message("Disabled #Rigorous/RandomForest.")
 #   endif
 
-#	if !defined($DISABLE_MTE)
-#		include "theoremoperator.hpp"
+#	if !defined($DISABLE_TTR)
+#		include "hottreasoner.hpp"
 	namespace Rigorous {
-		using namespace TheoremOperator;
+		using namespace Bakaford;
 	}
 #	else
-#   	pragma message("Disabled #Rigorous/MachineTheoremEmitter.")
+#   	pragma message("Disabled #Bakaford/HoTTReasoner.")
 #   endif
 #endif

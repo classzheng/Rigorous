@@ -10,8 +10,7 @@
 
 #include "mathlib.hpp"
 
- #pragma once
- #pragma GCC optimize (2)
+#pragma once
 
 namespace NeuralNetwork {
 	 

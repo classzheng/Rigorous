@@ -21,6 +21,8 @@
 namespace Mathlib {
 	
 	static double epsilon = 1e-12;
+	std::mt19937 rng(time(nullptr));
+	std::uniform_real_distribution<double> dist(-1.L,1.L);
 	template<typename _Type> bool GaussianEliminate(std::vector<std::vector<_Type>>& a) {
 		int n = a.size();
 		for (int i = 0; i < n; ++i) {
@@ -118,8 +120,11 @@ namespace Mathlib {
 		}
 	};
 	
+	inline [[deprecated]] double genrandom_org(void) {
+		return (double)(rand()%1000)/500.L-1.L;
+	}
 	inline double genrandom(void) {
-		return ( double)(rand()%1000)/500.L-1.L;
+		return (double)dist(rng);
 	}
 	
 	template<typename _Type> _Type sigmoid(const _Type x) {
